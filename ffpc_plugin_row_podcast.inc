@@ -79,51 +79,52 @@ class ffpc_plugin_row_podcast extends views_plugin_row_node_rss {
     }
     $getid3 = new getID3;
     foreach ( $this->view->field as $id => $field ) {
-
       // In this section handle file fields.
       if ($field->content_field['widget']['type'] == 'filefield_widget') {
         foreach ( $item->{$field->content_field['field_name']} as $file ) {
-          $info = $getid3->analyze($file['filepath']);
-          $file_extra = array();
-          $file_extra[] = array(
-            'key' => 'enclosure',
-            'attributes'  =>  array(
-              'url' => file_create_url($file['filepath']),
-              'length' => $file['filesize'],
-              'type' => $file['filemime'],
-            ),
-          );
-          $file_extra[] = array(
-            'key' => 'itunes:duration',
-            'value' => $info['playtime_string'],
-          );
-          $file_extra[] = array(
-            'key' => 'itunes:author',
-            'value' => $info['tags']['id3v2']['artist'][0],
-          );
+          if (isset($file['filepath']) && !empty($file['filepath'])) {
+            $info = $getid3->analyze($file['filepath']);
+            $file_extra = array();
+            $file_extra[] = array(
+              'key' => 'enclosure',
+              'attributes'  =>  array(
+                'url' => file_create_url($file['filepath']),
+                'length' => $file['filesize'],
+                'type' => $file['filemime'],
+              ),
+            );
+            $file_extra[] = array(
+              'key' => 'itunes:duration',
+              'value' => $info['playtime_string'],
+            );
+            $file_extra[] = array(
+              'key' => 'itunes:author',
+              'value' => $info['tags']['id3v2']['artist'][0],
+            );
 
-          $file_extra[] = array(
-            'key' => 'itunes:subtitle',
-            'value' => str_replace('&amp;', '&', $item_subtitle),
-          );
-          $file_extra[] = array(
-            'key' => 'itunes:summary',
-            'value' => str_replace('&amp;', '&', $stripped_item_text),
-          );
-          $file_extra[] = array(
-            'key' => 'guid',
-            'value' => file_create_url($file['filepath']),
-            'attributes' => array('isPermaLink' => 'false'),
-          );
-          $file_extra = array_merge($extra, $file_extra);
-          /*
-           * The following function takes title, link, description and then
-           * all additional XML elements.  For the title we'll use the node
-           * title.  Link serves no real purpose in a podcast.  Description
-           * is overridden by the extra "subtitle" tag but we'll keep it for
-           * completeness with RSS and use the node teaser.
-          */
-          $output .= format_rss_item($item->title, $item->link, $item_text, $file_extra );
+            $file_extra[] = array(
+              'key' => 'itunes:subtitle',
+              'value' => str_replace('&amp;', '&', $item_subtitle),
+            );
+            $file_extra[] = array(
+              'key' => 'itunes:summary',
+              'value' => str_replace('&amp;', '&', $stripped_item_text),
+            );
+            $file_extra[] = array(
+              'key' => 'guid',
+              'value' => file_create_url($file['filepath']),
+              'attributes' => array('isPermaLink' => 'false'),
+            );
+            $file_extra = array_merge($extra, $file_extra);
+            /*
+             * The following function takes title, link, description and then
+             * all additional XML elements.  For the title we'll use the node
+             * title.  Link serves no real purpose in a podcast.  Description
+             * is overridden by the extra "subtitle" tag but we'll keep it for
+             * completeness with RSS and use the node teaser.
+            */
+            $output .= format_rss_item($item->title, $item->link, $item_text, $file_extra );
+          }
         }
       }
 
@@ -131,24 +132,26 @@ class ffpc_plugin_row_podcast extends views_plugin_row_node_rss {
       // Note: id3 information is not available to the feed using a link.
       elseif ($field->content_field['widget']['type'] == 'link') {
         foreach ( $item->{$field->content_field['field_name']} as $link ) {
-          $file_extra[] = array(
-            'key' => 'guid',
-            'value' => check_url($link['url']),
-            'attributes' => array('isPermaLink' => 'false'),
-          );
-          $file_extra[] = array(
-            'key' => 'enclosure',
-            'attributes'  =>  ffpc_remote_headers($link[url])
-          );
-          $file_extra = array_merge($extra, $file_extra);
-          /*
-           * The following function takes title, link, description and then
-           * all additional XML elements.  For the title we'll use the node
-           * title.  Link serves no real purpose in a podcast.  Description
-           * is overridden by the extra "subtitle" tag but we'll keep it for
-           * completeness with RSS and use the node teaser.
-          */
-          $output .= format_rss_item($item->title, $item->link, $item_text, $file_extra );
+          if (isset($link['url']) && !empty($link['url'])) {
+            $file_extra[] = array(
+              'key' => 'guid',
+              'value' => check_url($link['url']),
+              'attributes' => array('isPermaLink' => 'false'),
+            );
+            $file_extra[] = array(
+              'key' => 'enclosure',
+              'attributes'  =>  ffpc_remote_headers($link[url])
+            );
+            $file_extra = array_merge($extra, $file_extra);
+            /*
+             * The following function takes title, link, description and then
+             * all additional XML elements.  For the title we'll use the node
+             * title.  Link serves no real purpose in a podcast.  Description
+             * is overridden by the extra "subtitle" tag but we'll keep it for
+             * completeness with RSS and use the node teaser.
+            */
+            $output .= format_rss_item($item->title, $item->link, $item_text, $file_extra );
+          }
         }
       }
     }
