@@ -61,9 +61,31 @@ function template_preprocess_ffpc_view_podcast_feed(&$vars) {
       'itunes:email' => variable_get('site_mail', ini_get('sendmail_from')),
     ),
   );
-  
+
   $vars['namespaces'] = drupal_attributes($style->namespaces);
   $vars['channel'] = format_rss_channel($title, $vars['link'], $description, $items, $language->language, $args);
 
   drupal_set_header('Content-Type: application/rss+xml; charset=utf-8');
+}
+
+/**
+ * Helper function that retrieves headers for the specified URL, determines
+ * the content-type and content-length, and returns it. Kind of ugly, yo.
+ *
+ * This function is based upon the similar usage in swflink.
+ * @see http://drupalcode.org/viewvc/drupal/contributions/modules/swflink/swflink.module?revision=1.2&view=markup
+ */
+function ffpc_remote_headers($url) {
+  if ($headers = get_headers($url, 1)) {
+    return array(
+      'url' => check_url($url),
+      'length' => array_key_exists("Content-Length", $headers) ? $headers["Content-Length"]: 0,
+      'type' => array_key_exists("Content-Type", $headers) ? $headers["Content-Type"]: 'audio/mpeg',
+    );
+  }
+  else {
+    return array(
+      'url' => check_url($url),
+    );
+  }
 }
